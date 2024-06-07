@@ -1,0 +1,54 @@
+# pre-commit for deployment related resources
+# e.g. shell files, dockerfiles, helm chart etc..
+repos:
+  - repo: https://github.com/hadolint/hadolint
+    rev: 'v2.10.0'
+    hooks:
+      - id: hadolint
+  # Cannot use official repo as it relies on Docker, which cannot be supported by either pre-commit.ci or CircleCI
+  - repo: https://github.com/Jarmos-san/shellcheck-precommit
+    rev: 'v0.2.0'
+    hooks:
+      - id: shellcheck-system
+        name: shellcheck
+
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: 'v0.1.17'
+    hooks:
+      - id: helmlint
+
+  - repo: https://github.com/syntaqx/git-hooks
+    rev: 'v0.0.17'
+    hooks:
+      - id: circleci-config-validate
+
+  - repo: https://github.com/specklesystems/pre-commit
+    rev: '0.2.0'
+    hooks:
+      - id: ggshield-not-ci
+
+  - repo: https://github.com/psf/black
+    rev: '22.10.0'
+    hooks:
+      - id: black # python formatter
+        name: black (python formatter)
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.170
+    hooks:
+      - id: ruff
+        name: ruff (python linter)
+        args:
+          - --ignore=E501 # ignoring error about lines that are too long
+
+  - repo: local
+    hooks:
+      - id: helm-documentation
+        name: Helm Json Schema
+        language: system
+        files: utils/helm/speckle-server/values.yaml
+        entry: utils/helm/update-schema-json.sh
+        description: If this fails it is because the values.yaml file was updated. Or has missing or incorrect documentation.
+
+ci:
+  autoupdate_schedule: quarterly

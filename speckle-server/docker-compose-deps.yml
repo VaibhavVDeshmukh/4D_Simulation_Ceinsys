@@ -1,0 +1,77 @@
+version: '3'
+services:
+  # Actual Speckle Server dependencies
+
+  postgres:
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+      - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
+    ports:
+      - '127.0.0.1:5432:5432'
+
+  redis:
+    image: 'redis:7-alpine'
+    restart: always
+    volumes:
+      - redis-data:/data
+    ports:
+      - '127.0.0.1:6379:6379'
+
+  minio:
+    image: 'minio/minio'
+    command: server /data --console-address ":9001"
+    restart: always
+    volumes:
+      - minio-data:/data
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+
+  maildev:
+    restart: always
+    image: maildev/maildev
+    ports:
+      - '127.0.0.1:1080:1080'
+      - '127.0.0.1:1025:1025'
+
+  # Useful for debugging / exploring local databases
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@localhost.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - '127.0.0.1:16543:80'
+    depends_on:
+      - postgres
+
+  redis_insight:
+    image: redislabs/redisinsight:latest
+    restart: always
+    volumes:
+      - redis_insight-data:/db
+    ports:
+      - '127.0.0.1:8001:8001'
+    depends_on:
+      - redis
+
+# Storage persistency
+
+volumes:
+  postgres-data:
+  redis-data:
+  pgadmin-data:
+  redis_insight-data:
+  minio-data:

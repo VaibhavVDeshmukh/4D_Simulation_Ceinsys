@@ -1,0 +1,1032 @@
+version: 2.1
+
+orbs:
+  snyk: snyk/snyk@2.0.3
+  codecov: codecov/codecov@4.0.0
+
+workflows:
+  test-build:
+    jobs:
+      - vulnerability-scan:
+          context:
+            - snyk
+          filters:
+            branches:
+              only:
+                - main
+                - hotfix*
+
+      - test-server:
+          filters: &filters-allow-all
+            tags:
+              # run tests for any commit on any branch, including any tags
+              only: /.*/
+
+      - test-frontend-2:
+          filters: *filters-allow-all
+
+      - test-viewer:
+          filters: *filters-allow-all
+
+      - test-ui-components:
+          filters: *filters-allow-all
+
+      - ui-components-chromatic:
+          context:
+            - chromatic-ui-components
+          filters: *filters-allow-all
+
+      - deployment-testing-approval:
+          type: approval
+          filters: &filters-ignore-main-branch-or-all-tags
+            branches:
+              ignore: &branches-special
+                - main
+                - /^hotfix.*$/
+                - /^testing\d*$/
+            tags:
+              ignore: /.*/
+
+      - deployment-test-docker-compose:
+          filters: &filters-deployment-testing
+            tags:
+              # run tests for any commit on any branch, including any tags
+              only: /.*/
+          requires:
+            - get-version
+            - pre-commit
+            - deployment-testing-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+            - docker-build-server
+            - docker-build-frontend
+            - docker-build-frontend-2
+            - docker-build-previews
+            - docker-build-webhooks
+            - docker-build-file-imports
+            - docker-build-test-container
+            - docker-build-monitor-container
+            - docker-build-docker-compose-ingress
+
+      - deployment-test-helm-chart:
+          filters: *filters-deployment-testing
+          requires:
+            - get-version
+            - pre-commit
+            - deployment-testing-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+            - docker-build-server
+            - docker-build-frontend
+            - docker-build-frontend-2
+            - docker-build-previews
+            - docker-build-webhooks
+            - docker-build-file-imports
+            - docker-build-test-container
+            - docker-build-monitor-container
+
+      - get-version:
+          filters: *filters-allow-all
+
+      - pre-commit:
+          filters: *filters-allow-all
+
+      - docker-build-server:
+          context: &build-context
+            - github-readonly-public-repos
+          filters: &filters-build
+            tags:
+              only: /.*/
+          requires:
+            - get-version
+
+      - docker-build-frontend:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-frontend-2:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-webhooks:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-file-imports:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-previews:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-test-container:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-monitor-container:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-docker-compose-ingress:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - publish-approval:
+          type: approval
+          filters: *filters-ignore-main-branch-or-all-tags
+
+      - docker-publish-server:
+          context: &docker-hub-context
+            - docker-hub
+          filters: &filters-publish
+            branches:
+              ignore: /pull\/[0-9]+/
+            tags:
+              only: /.*/
+          requires:
+            - docker-build-server
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-frontend:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-frontend
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-frontend-2:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-frontend-2
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-webhooks:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-webhooks
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-file-imports:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-file-imports
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-previews:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-previews
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-test-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-test-container
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-monitor-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-monitor-container
+            - get-version
+            - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-server
+
+      - docker-publish-docker-compose-ingress:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-docker-compose-ingress
+            - get-version
+            - pre-commit
+            - publish-approval
+
+      - publish-helm-chart:
+          filters: &filters-publish
+            branches:
+              only: *branches-special
+            tags:
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+          requires:
+            - deployment-test-docker-compose
+            - deployment-test-helm-chart
+            - docker-publish-docker-compose-ingress
+            - docker-publish-file-imports
+            - docker-publish-frontend
+            - docker-publish-frontend-2
+            - docker-publish-monitor-container
+            - docker-publish-previews
+            - docker-publish-server
+            - docker-publish-test-container
+            - docker-publish-webhooks
+            - get-version
+            - publish-approval
+
+      - update-helm-documentation:
+          filters: *filters-publish
+          requires:
+            - publish-helm-chart
+
+      - publish-npm:
+          filters:
+            tags:
+              only: *filters-tag
+            branches:
+              ignore: /.*/
+          context:
+            - npm-registry
+          requires:
+            - get-version
+            - test-server
+            - test-ui-components
+            - test-frontend-2
+            - test-viewer
+
+      - publish-viewer-sandbox-cloudflare-pages:
+          filters: *filters-publish
+          context:
+            - cloudflare-pages-edit
+          requires:
+            - test-viewer
+
+jobs:
+  get-version:
+    docker: &docker-base-image
+      - image: cimg/base:2024.02
+    working_directory: &work-dir /tmp/ci
+    steps:
+      - checkout
+      - run: mkdir -p workspace
+      - run:
+          name: set version
+          command: |
+            echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> workspace/env-vars
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - env-vars
+
+  pre-commit:
+    parameters:
+      config_file:
+        default: ./.pre-commit-config.yaml
+        description: Optional, path to pre-commit config file.
+        type: string
+      deployment_config_file:
+        default: ./.pre-commit-config.deployment.yaml
+        description: Optional, path to additional pre-commit config file.
+        type: string
+      cache_prefix:
+        default: ''
+        description: |
+          Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
+        type: string
+    docker:
+      - image: speckle/pre-commit-runner:latest
+    resource_class: large
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore pre-commit & Yarn Package cache
+          keys:
+            - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+            - yarn-packages-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install pre-commit hooks
+          command: pre-commit install-hooks --config <<parameters.config_file>>
+      - save_cache:
+          key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+          paths:
+            - ~/.cache/pre-commit
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Run pre-commit
+          command: ./.husky/pre-commit
+      - run:
+          command: git --no-pager diff
+          name: git diff
+          when: on_fail
+
+  test-server:
+    docker:
+      - image: cimg/node:18.19.0
+      - image: cimg/redis:7.2.4
+      - image: cimg/postgres:14.11
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+      - image: 'minio/minio'
+        command: server /data --console-address ":9001"
+        # environment:
+
+    resource_class: large
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
+      PGDATABASE: speckle2_test
+      PGUSER: speckle
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://127.0.0.1:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://127.0.0.1:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FF_AUTOMATE_MODULE_ENABLED: 'true'
+      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Wait for dependencies to start
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+
+      - run:
+          command: touch .env.test
+          working_directory: 'packages/server'
+
+      - run:
+          name: 'Lint with TypeScript Compiler'
+          command: yarn lint:tsc
+          working_directory: 'packages/server'
+
+      - run:
+          command: yarn test:report
+          working_directory: 'packages/server'
+
+      - codecov/upload:
+          file: packages/server/coverage/lcov.info
+
+      - run:
+          name: Introspect GQL schema for subsequent checks
+          command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+          working_directory: 'packages/server'
+
+      - run:
+          name: Checking for GQL schema breakages against speckle.xyz
+          command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
+
+      - run:
+          name: Checking for GQL schema breakages against latest.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
+
+      - store_test_results:
+          path: packages/server/reports
+
+      # - store_artifacts:
+      # path: packages/server/coverage/lcov-report
+      # destination: package/server/coverage
+
+  test-frontend-2:
+    docker: &docker-node-browsers-image
+      - image: cimg/node:18.19.0-browsers
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Lint everything
+          command: yarn lint
+          working_directory: 'packages/frontend-2'
+
+  test-viewer:
+    docker: &docker-node-browsers-image
+      - image: cimg/node:18.19.0-browsers
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Lint everything
+          command: yarn lint
+          working_directory: 'packages/viewer'
+
+      - run:
+          name: Run tests
+          command: yarn test
+          working_directory: 'packages/viewer'
+
+  test-ui-components:
+    docker: *docker-node-browsers-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Lint tailwind theme
+          command: yarn lint
+          working_directory: 'packages/tailwind-theme'
+
+      - run:
+          name: Lint ui components
+          command: yarn lint
+          working_directory: 'packages/ui-components'
+
+      - run:
+          name: Lint component nuxt package
+          command: yarn lint
+          working_directory: 'packages/ui-components-nuxt'
+
+      - run:
+          name: Install Playwright
+          command: cd ~ && npx playwright install --with-deps
+
+      - run:
+          name: Test via Storybook
+          command: yarn storybook:test:ci
+          working_directory: 'packages/ui-components'
+
+  ui-components-chromatic:
+    resource_class: medium+
+    docker: &docker-node-image
+      - image: cimg/node:18.19.0
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build shared packages
+          command: yarn build:public
+
+      - run:
+          name: Run chromatic
+          command: yarn chromatic
+          working_directory: 'packages/ui-components'
+
+  vulnerability-scan:
+    # snyk can undertake most types of scans through GitHub integration
+    # which does not require integration with the CI
+    # but it is not possible to scan npm/yarn package.json
+    # because it requires node_modules
+    # therefore this scanning has to be triggered via the cli
+    docker: *docker-node-image
+    resource_class: small
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - snyk/scan:
+          additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
+          fail-on-issues: false
+
+  deployment-test-docker-compose:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      docker_layer_caching: true
+    resource_class: large
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      # create the nix folder with permissive write permissions
+      - run: |
+          sudo mkdir /nix
+          sudo chmod 777 /nix
+      - restore_cache:
+          name: Restore nix cache
+          keys:
+            - nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+      - run:
+          name: Install the nix package manager
+          command: |
+            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
+            echo "source /etc/bashrc" >> "${BASH_ENV}"
+      - run:
+          name: Initialize nix shell
+          command: |
+            nix-shell --run "echo Here, a nix shell for you" ./.circleci/deployment/docker-compose-shell.nix
+      - save_cache:
+          key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+          paths:
+            - /nix
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: nix-shell --run "tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
+
+  deployment-test-helm-chart:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      docker_layer_caching: true
+    resource_class: large
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      # create the nix folder with permissive write permissions
+      - run: |
+          sudo mkdir /nix
+          sudo chmod 777 /nix
+      - restore_cache:
+          name: Restore nix cache
+          keys:
+            - nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+      - run:
+          name: Install the nix package manager
+          command: |
+            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
+            echo "source /etc/bashrc" >> "${BASH_ENV}"
+      - run:
+          name: Initialize nix shell
+          command: |
+            nix-shell \
+            --run "echo Here, a nix shell for you" \
+            ./.circleci/deployment/helm-chart-shell.nix
+      - save_cache:
+          key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+          paths:
+            - /nix
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
+      - run: echo "${KUBECONFIG}"
+      - run:
+          name: Template Helm Chart
+          command: |
+            nix-shell \
+            --run "helm template speckle-server ./utils/helm/speckle-server" \
+            ./.circleci/deployment/helm-chart-shell.nix
+      - run:
+          name: Add 127.0.0.1 domains to /etc/hosts
+          command: |
+            sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'
+            cat /etc/hosts
+      - run:
+          name: Change directory permissions to allow kind to create directories
+          command: |
+            mkdir -p "./minio-data"
+            if [ "$(stat -f "%A" "./minio-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on minio-data directory to 775"
+              sudo chmod 775 "./minio-data"
+            fi
+            mkdir -p "./postgres-data"
+            if [ "$(stat -f "%A" "./postgres-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
+              sudo chmod 775 "./postgres-data"
+            fi
+
+      - run:
+          name: Deploy Kubernetes (kind) cluster
+          command: |
+            nix-shell \
+            --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
+            ./.circleci/deployment/helm-chart-shell.nix
+
+      - run:
+          name: Deploy Kubernetes resources to cluster
+          command: |
+            nix-shell \
+            --run "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
+            ./.circleci/deployment/helm-chart-shell.nix
+
+  docker-build: &build-job
+    docker: *docker-base-image
+    resource_class: medium
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - setup_remote_docker:
+          version: default
+          docker_layer_caching: true
+      - run:
+          name: Build and Save
+          command: ./.circleci/build.sh
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - speckle*
+
+  docker-build-server:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: server
+
+  docker-build-frontend:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend
+
+  docker-build-frontend-2:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
+
+  docker-build-previews:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: preview-service
+
+  docker-build-webhooks:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: webhook-service
+
+  docker-build-file-imports:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: fileimport-service
+
+  docker-build-test-container:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: test-deployment
+
+  docker-build-monitor-container:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: monitor-deployment
+
+  docker-build-docker-compose-ingress:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: docker-compose-ingress
+
+  docker-publish: &publish-job
+    docker: *docker-base-image
+    resource_class: medium
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - setup_remote_docker:
+          version: default
+          docker_layer_caching: true
+      - run:
+          name: Publish
+          command: ./.circleci/publish.sh
+
+  docker-publish-server:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: server
+
+  docker-publish-frontend:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend
+
+  docker-publish-frontend-2:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
+
+  docker-publish-previews:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: preview-service
+
+  docker-publish-webhooks:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: webhook-service
+
+  docker-publish-file-imports:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: fileimport-service
+
+  docker-publish-test-container:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: test-deployment
+
+  docker-publish-monitor-container:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: monitor-deployment
+
+  docker-publish-docker-compose-ingress:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: docker-compose-ingress
+
+  publish-npm:
+    docker: *docker-node-image
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - run:
+          name: auth to npm as Speckle
+          command: |
+            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml
+            echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
+      - run:
+          name: try login to npm
+          command: yarn npm whoami
+
+      - run:
+          name: build public packages
+          command: yarn workspaces foreach -ptv --no-private run build
+      - run:
+          name: bump all versions
+          # bump all versions in dependency tree order but not in parallel
+          command: yarn workspaces foreach -tv version $IMAGE_VERSION_TAG
+
+      - run:
+          name: publish to npm
+          command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
+
+  publish-helm-chart:
+    docker:
+      - image: cimg/python:3.12.1
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - add_ssh_keys:
+          fingerprints:
+            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
+      - run:
+          name: Publish Helm Chart
+          command: ./.circleci/publish_helm_chart.sh
+
+  update-helm-documentation:
+    docker: *docker-node-image
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - add_ssh_keys:
+          fingerprints:
+            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
+      - run:
+          name: Update Helm Documentation
+          command: ./.circleci/update_helm_documentation.sh
+
+  publish-viewer-sandbox-cloudflare-pages:
+    docker: *docker-node-image
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Lint viewer-sandbox
+          command: yarn lint
+          working_directory: 'packages/viewer-sandbox'
+      - run:
+          name: Build viewer-sandbox
+          command: yarn build
+          working_directory: 'packages/viewer-sandbox'
+      - run:
+          name: Publish Viewer Sandbox to Cloudflare Pages
+          command: ./.circleci/publish_cloudflare_pages.sh
+          environment:
+            CLOUDFLARE_PAGES_PROJECT_NAME: viewer
+            VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox

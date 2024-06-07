@@ -1,0 +1,11 @@
+query StreamObjectNoData($streamId: String!, $id: String!) {
+  stream(id: $streamId) {
+    id
+    name
+    object(id: $id) {
+      totalChildrenCount
+      id
+      speckleType
+    }
+  }
+}
