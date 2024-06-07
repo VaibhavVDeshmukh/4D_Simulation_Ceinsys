@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/public/potree/build/potree/potree.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/public/potree/libs/jquery-ui/jquery-ui.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/public/potree/libs/openlayers3/ol.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/public/potree/libs/spectrum/spectrum.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/public/potree/libs/jstree/themes/mixed/style.css"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="">
+    <div class="w-screen h-screen flex flex-row">
+      <div class="h-auto w-1/2 flex-1">
+        <div
+          id="potree_render_area"
+          class="flex-1 relative max-w-1/2 overflow-hidden"
+        ></div>
+      </div>
+      <div class="h-auto w-1/2 flex-1">
+        <div id="renderer" class="flex-1 relative overflow-hidden"></div>
+        <div
+          id="renderer-controls"
+          class="relative overflow-hidden h-full pointer-events-none w-auto"
+        ></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/pcViewer.ts"></script>
+    <script src="/public/potree/libs/jquery/jquery-3.1.1.min.js"></script>
+
+    <script src="/public/potree/libs/spectrum/spectrum.js"></script>
+    <script src="/public/potree/libs/jquery-ui/jquery-ui.min.js"></script>
+    <script src="/public/potree/libs/other/BinaryHeap.js"></script>
+    <script src="/public/potree/libs/tween/tween.min.js"></script>
+    <script src="/public/potree/libs/d3/d3.js"></script>
+    <script src="/public/potree/libs/proj4/proj4.js"></script>
+    <script src="/public/potree/libs/openlayers3/ol.js"></script>
+    <script src="/public/potree/libs/i18next/i18next.js"></script>
+    <script src="/public/potree/libs/jstree/jstree.js"></script>
+    <script src="/public/potree/build/potree/potree.js"></script>
+    <script src="/public/potree/libs/plasio/js/laslaz.js"></script>
+    <script src="/public/potree/libs/shapefile/shapefile.js"></script>
+    <script src="./src/timeline.js"></script>
+    <div class="container">
+      <div class="wrapper">
+        <section class="cd-horizontal-timeline">
+          <div class="timeline">
+            <div class="events-wrapper">
+              <div class="events">
+                <ol>
+                  <li><a href="#0" data-date="00/00/00" class="selected">JAN</a></li>
+                  <li><a href="#0" data-date="01/00/00">FEB</a></li>
+                  <li><a href="#0" data-date="02/00/00">MAR</a></li>
+                  <li><a href="#0" data-date="03/00/00">APR</a></li>
+                  <li><a href="#0" data-date="04/00/00">MAY</a></li>
+                  <li><a href="#0" data-date="05/00/00">JUN</a></li>
+                  <li><a href="#0" data-date="06/00/00">JUL</a></li>
+                  <li><a href="#0" data-date="07/00/00">AUG</a></li>
+                  <li><a href="#0" data-date="08/00/00">SEPT</a></li>
+                  <li><a href="#0" data-date="09/00/00">OCT</a></li>
+                  <li><a href="#0" data-date="10/00/00">NOV</a></li>
+                  <li><a href="#0" data-date="11/00/00">DEC</a></li>
+                  <li><a href="#0" data-date="12/00/00">JAN</a></li>
+                  <li><a href="#0" data-date="13/00/00">FEB</a></li>
+                  <li><a href="#0" data-date="14/00/00">MAR</a></li>
+                  <li><a href="#0" data-date="15/00/00">APR</a></li>
+                  <li><a href="#0" data-date="16/00/00">MAY</a></li>
+                  <li><a href="#0" data-date="17/00/00">JUN</a></li>
+                  <li><a href="#0" data-date="18/00/00">JUL</a></li>
+                  <li><a href="#0" data-date="19/00/00">AUG</a></li>
+                  <li><a href="#0" data-date="20/00/00">SEPT</a></li>
+                  <li><a href="#0" data-date="21/00/00">OCT</a></li>
+                  <li><a href="#0" data-date="22/00/00">NOV</a></li>
+                  <li><a href="#0" data-date="23/00/00">DEC</a></li>
+                </ol>
+
+                <span class="filling-line" aria-hidden="true"></span>
+              </div>
+              <!-- .events -->
+            </div>
+            <!-- .events-wrapper -->
+
+            <ul class="cd-timeline-navigation">
+              <li><a href="#0" class="prev inactive">Prev</a></li>
+              <li><a href="#0" class="next">Next</a></li>
+            </ul>
+            <!-- .cd-timeline-navigation -->
+          </div>
+          <!-- .timeline -->
+
+          <div class="events-content">
+            <ol>
+              <li class="selected" data-date="00/00/00"></li>
+              <li data-date="01/00/00"></li>
+              <li data-date="02/00/00"></li>
+
+              <li data-date="03/00/00"></li>
+
+              <li data-date="04/00/00"></li>
+
+              <li data-date="05/00/00"></li>
+
+              <li data-date="06/00/00"></li>
+
+              <li data-date="07/00/00"></li>
+
+              <li data-date="08/00/00"></li>
+
+              <li data-date="09/00/00"></li>
+
+              <li data-date="10/00/00"></li>
+
+              <li data-date="11/00/00"></li>
+              <li data-date="12/00/00"></li>
+              <li data-date="13/00/00"></li>
+              <li data-date="14/00/00"></li>
+              <li data-date="15/00/00"></li>
+              <li data-date="16/00/00"></li>
+              <li data-date="17/00/00"></li>
+              <li data-date="18/00/00"></li>
+              <li data-date="19/00/00"></li>
+              <li data-date="20/00/00"></li>
+              <li data-date="21/00/00"></li>
+              <li data-date="22/00/00"></li>
+              <li data-date="23/00/00"></li>
+            </ol>
+          </div>
+          <!-- .events-content -->
+        </section>
+      </div>
+    </div>
+
+    <div class="container1">
+      <div class="circular-progress">
+        <span class="progress-value">0%</span>
+      </div>
+      <span class="text">Progress</span>
+    </div>
+    <!-- <script type="module">
+      import * as THREE from 'three'
+
+      window.viewer = new Potree.Viewer(document.getElementById('potree_render_area'))
+
+      viewer.setEDLEnabled(true)
+      viewer.setFOV(60)
+      viewer.setPointBudget(2_000_000)
+      viewer.loadSettingsFromURL()
+      viewer.loadGUI(() => {
+        viewer.setLanguage('en')
+        $('#menu_appearance').next().show()
+        viewer.toggleSidebar()
+      })
+
+      // Load and add point cloud to scene
+      Potree.loadPointCloud(
+        'http://5.9.65.151/mschuetz/potree/resources/pointclouds/helimap/360/MLS_drive1/cloud.js',
+        'MLS',
+        (e) => {
+          let scene = viewer.scene
+          let pointcloud = e.pointcloud
+
+          let material = pointcloud.material
+          material.size = 0.5
+          material.minSize = 2.0
+          material.pointSizeType = Potree.PointSizeType.ADAPTIVE
+          material.shape = Potree.PointShape.SQUARE
+          material.activeAttributeName = 'rgba'
+
+          scene.addPointCloud(pointcloud)
+
+          viewer.scene.view.setView(
+            [2652381.103, 1249049.447, 411.636],
+            [2652364.407, 1249077.205, 399.696]
+          )
+
+          run()
+        }
+      )
+
+      async function run() {
+        proj4.defs('WGS84', '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+        proj4.defs('pointcloud', viewer.getProjection())
+        let transform = proj4('WGS84', 'pointcloud')
+
+        let params = {
+          transform: transform
+        }
+
+        // this file contains coordinates, orientation and filenames of the images:
+        // http://5.9.65.151/mschuetz/potree/resources/pointclouds/helimap/360/Drive2_selection/coordinates.txt
+        // Potree.Images360Loader.load(
+        //   'http://5.9.65.151/mschuetz/potree/resources/pointclouds/helimap/360/Drive2_selection',
+        //   viewer,
+        //   params
+        // ).then((images) => {
+        //   viewer.scene.add360Images(images)
+        // })
+
+        // viewer.mapView.showSources(false)
+      }
+    </script> -->
+    <!-- <div class="w-screen h-screen flex flex-col" id="multi-root">
+      <div class="h-1/2">
+        <div class="absolute w-full h-1/2" id="renderer0"></div>
+        <div
+          id="renderer0-controls"
+          class="relative overflow-y-scroll h-full pointer-events-none w-auto"
+        ></div>
+      </div>
+      <div class="border-t-2 border-blue-500 h-1/2">
+        <div class="absolute w-full h-1/2" id="renderer1"></div>
+        <div
+          id="renderer1-controls"
+          class="relative overflow-y-scroll h-full pointer-events-none w-auto"
+        ></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main-multi.ts"></script> -->
+  </body>
+</html>
