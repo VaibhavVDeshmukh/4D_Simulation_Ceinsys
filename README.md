@@ -1,8 +1,6 @@
-
 4D SIMULATION - CEINSYS
 
-#### README #####
- 
+#### README
 
 This project is basically a 4D Simulation which includes the visual representation of Point cloud along with a 3D Model made using Speckle and Potree.
 
@@ -20,25 +18,18 @@ So, on side you get to see a 3D model and on the other, you get the Point cloud 
 
 We have even integrated the Speckle Generic UI in our application which gives us the option to Load Point Cloud and 3D Model.
 
+---
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------------------------------
+---
 
-Steps to run the project : 
+Steps to run the project :
 
 1. git clone https://github.com/VaibhavVDeshmukh/SpeckleVerse-Hackathon-ceinsys.git
-2. cd speckle-server/packages/viewer-sandbox/public/potree
+2. cd viewer-sandbox/public/potree
 3. npm install
 4. npm run build
-5. cd speckle-server
-7. corepack enable
-8. yarn
+5. cd viewer-sandbox
+6. yarn
+7. yarn install
+8. yarn dev
 9. yarn build
-10. yarn dev:docker:up
-11. cp packages/server/.env-example packages/server/.env
-12. cp packages/server/.env.test-example packages/server/.env.test
-13. cp packages/frontend-2/.env.example packages/frontend-2/.env
-14. cp packages/dui3/.env.example packages/dui3/.env
-15. yarn dev
-
-
